@@ -1,46 +1,313 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
-        <style>
-            .weatherwidget-io {
-                pointer-events: none;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="main">
-            <a class="weatherwidget-io" href="https://forecast7.com/en/58d30n134d42/juneau/?unit=us" data-label_1="JUNEAU" data-label_2="WEATHER" data-theme="original" >JUNEAU WEATHER</a>
-        <script>
-        !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');
-        </script>
-        </div>
-        <script type="text/javascript">
-            function refresh(){
-    location.reload();
-}
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<title>Calculateur de Calories Avancé</title>
+		<style>
+			:root {
+				margin: 0;
+				padding: 0;
+			}
+			body {
+				font-family: Arial, sans-serif;
+				line-height: 1.6;
+				color: #333;
+				height: 100vh;
+				background-color: #f6f5f7;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+			#calorieCalculator {
+				max-width: 400px;
+				margin: 0 auto;
+				padding: 30px;
+				background-color: white;
+				box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px,
+					rgba(0, 0, 0, 0.05) 0px 4px 6px -2px;
+				border-radius: 10px;
+			}
+			h2 {
+				text-align: center;
+				color: #2c3e50;
+			}
+			.form-group {
+				margin: 15px 0px 15px 0px;
+			}
+			.age {
+				margin-top: 40px;
+			}
+			label {
+				display: block;
+				margin-bottom: 5px;
+			}
+			input,
+			select {
+				width: 100%;
+				padding: 8px;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+			}
 
-setInterval(refresh, 3600000) 
-            //always subscribe to ready event and implement widget related code
-            //inside callback function , it is the best practice while developing widgets
-            JFCustomWidget.subscribe("ready", function(){
-                var label = JFCustomWidget.getWidgetSetting('QuestionLabel');
-                document.getElementById('labelText').innerHTML = label;
-                //subscribe to form submit event
-                JFCustomWidget.subscribe("submit", function(){
-                    var msg = {
-                        //you should valid attribute to data for JotForm
-                        //to be able to use youw widget as required
-                        valid: true,
-                        value: document.getElementById('userInput').value
-                    }
-                    // send value to JotForm
-                    JFCustomWidget.sendSubmit(msg);
-                });
-            });
-        </script>
-        
-    </body>
+			#sexe,
+			#activite,
+			#objectif {
+				background: linear-gradient(to right, #ff4b2b, #ff416c);
+				color: white;
+			}
+			option {
+				color: #333;
+			}
+			button {
+				background-color: #ff416c;
+				background: linear-gradient(to right, #ff4b2b, #ff416c);
+				color: white;
+				padding: 10px;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				width: 100%;
+			}
+			hr {
+				border: 0.5px dashed #ff4b2b;
+			}
+			#result {
+				margin-top: 20px;
+				font-weight: bold;
+				text-align: center;
+			}
+			.tooltip {
+				position: relative;
+				display: inline-block;
+				cursor: help;
+			}
+			.tooltip .tooltiptext {
+				visibility: hidden;
+				width: 200px;
+				background-color: #555;
+				color: #fff;
+				text-align: center;
+				border-radius: 6px;
+				padding: 5px;
+				position: absolute;
+				z-index: 1;
+				bottom: 125%;
+				left: 50%;
+				margin-left: -100px;
+				opacity: 0;
+				transition: opacity 0.3s;
+			}
+			.tooltip:hover .tooltiptext {
+				visibility: visible;
+				opacity: 1;
+			}
+			.error {
+				color: red;
+				font-size: 0.9em;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="calorieCalculator">
+			<h2>Calculateur de Calories Avancé</h2>
+			<hr />
+			<div class="form-group">
+				<label class="age" for="age"
+					>Âge
+					<span class="tooltip"
+						><span class="tooltip-icon">❓</span
+						><span class="tooltiptext"
+							>Entrez votre âge en années</span
+						></span
+					></label
+				>
+				<input type="number" id="age" min="15" max="100" required />
+				<span id="ageError" class="error"></span>
+			</div>
+			<div class="form-group">
+				<label for="sexe"
+					>Sexe
+					<span class="tooltip"
+						>❓<span class="tooltiptext"
+							>Sélectionnez votre sexe biologique</span
+						></span
+					></label
+				>
+				<select id="sexe" required>
+					<option value="">Choisissez</option>
+					<option value="homme">Homme</option>
+					<option value="femme">Femme</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label for="poids"
+					>Poids (kg)
+					<span class="tooltip"
+						>❓<span class="tooltiptext"
+							>Entrez votre poids en kilogrammes</span
+						></span
+					></label
+				>
+				<input
+					type="number"
+					id="poids"
+					min="30"
+					max="300"
+					step="0.1"
+					required
+				/>
+				<span id="poidsError" class="error"></span>
+			</div>
+			<div class="form-group">
+				<label for="taille"
+					>Taille (cm)
+					<span class="tooltip"
+						>❓<span class="tooltiptext"
+							>Entrez votre taille en centimètres</span
+						></span
+					></label
+				>
+				<input type="number" id="taille" min="100" max="250" required />
+				<span id="tailleError" class="error"></span>
+			</div>
+			<div class="form-group">
+				<label for="activite"
+					>Niveau d'activité
+					<span class="tooltip"
+						>❓<span class="tooltiptext"
+							>Sélectionnez votre niveau d'activité habituel</span
+						></span
+					></label
+				>
+				<select id="activite" required>
+					<option value="">Choisissez</option>
+					<option value="1.2">
+						Sédentaire (peu ou pas d'exercice)
+					</option>
+					<option value="1.375">
+						Légèrement actif (exercice léger 1-3 jours/semaine)
+					</option>
+					<option value="1.55">
+						Modérément actif (exercice modéré 3-5 jours/semaine)
+					</option>
+					<option value="1.725">
+						Très actif (exercice intense 6-7 jours/semaine)
+					</option>
+					<option value="1.9">
+						Extrêmement actif (exercice très intense, travail
+						physique)
+					</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label for="objectif"
+					>Objectif
+					<span class="tooltip"
+						>❓<span class="tooltiptext"
+							>Choisissez votre objectif de santé</span
+						></span
+					></label
+				>
+				<select id="objectif" required>
+					<option value="">Choisissez</option>
+					<option value="perte">Perte de poids</option>
+					<option value="maintien">Maintien du poids</option>
+					<option value="prise">Prise de masse</option>
+				</select>
+			</div>
+			<button onclick="calculerCalories()">Calculer</button>
+			<div id="result"></div>
+		</div>
+
+		<script>
+			function validateInputs() {
+				let isValid = true;
+				const age = document.getElementById("age").value;
+				const poids = document.getElementById("poids").value;
+				const taille = document.getElementById("taille").value;
+
+				if (age < 15 || age > 100) {
+					document.getElementById("ageError").textContent =
+						"L'âge doit être entre 15 et 100 ans.";
+					isValid = false;
+				} else {
+					document.getElementById("ageError").textContent = "";
+				}
+
+				if (poids < 30 || poids > 300) {
+					document.getElementById("poidsError").textContent =
+						"Le poids doit être entre 30 et 300 kg.";
+					isValid = false;
+				} else {
+					document.getElementById("poidsError").textContent = "";
+				}
+
+				if (taille < 100 || taille > 250) {
+					document.getElementById("tailleError").textContent =
+						"La taille doit être entre 100 et 250 cm.";
+					isValid = false;
+				} else {
+					document.getElementById("tailleError").textContent = "";
+				}
+
+				return isValid;
+			}
+
+			function calculerCalories() {
+				if (!validateInputs()) {
+					return;
+				}
+
+				const age = document.getElementById("age").value;
+				const sexe = document.getElementById("sexe").value;
+				const poids = document.getElementById("poids").value;
+				const taille = document.getElementById("taille").value;
+				const activite = document.getElementById("activite").value;
+				const objectif = document.getElementById("objectif").value;
+
+				let mb; // Métabolisme de base
+				if (sexe === "homme") {
+					mb = 10 * poids + 6.25 * taille - 5 * age + 5;
+				} else {
+					mb = 10 * poids + 6.25 * taille - 5 * age - 161;
+				}
+
+				let calories = mb * activite;
+
+				// Ajustement selon l'objectif
+				switch (objectif) {
+					case "perte":
+						calories -= 500; // Déficit de 500 calories pour la perte de poids
+						break;
+					case "prise":
+						calories += 500; // Surplus de 500 calories pour la prise de masse
+						break;
+					// Pas de changement pour le maintien
+				}
+
+				const resultText = `Vos besoins caloriques journaliers pour ${
+					objectif === "perte"
+						? "perdre du poids"
+						: objectif === "prise"
+						? "prendre de la masse"
+						: "maintenir votre poids"
+				} sont d'environ ${Math.round(calories)} calories.`;
+
+				document.getElementById("result").innerHTML = resultText;
+
+				// Envoyer le résultat à Jotform
+				JFCustomWidget.sendSubmit({
+					calories: Math.round(calories),
+					resultText: resultText
+					objectif: objectif,
+					mb: Math.round(mb),
+				});
+			}
+
+			// Initialisation du widget
+			JFCustomWidget.subscribe("ready", function () {
+				// Le widget est prêt
+			});
+		</script>
+	</body>
 </html>
-
-<!-- RSS Feed Link - https://www.weather.gov/rss_page.php?site_name=ajk  -->
