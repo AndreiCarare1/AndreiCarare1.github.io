@@ -1,0 +1,9 @@
+{
+    "name": "OrderListWidget",
+    "description": "A widget to display a list of items with pictures, text, and a number input.",
+    "js": "widget.js",
+    "css": "widget.css",
+    "iframe": true,
+    "sandbox": true
+  }
+  
