@@ -1,83 +1,66 @@
 <!DOCTYPE html>
 <html>
-<head>
-<script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
-<style>
-            .item {
-                border: 1px solid #ddd;
-                padding: 10px;
-                margin-bottom: 10px;
+    <head>
+        <script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
+        <style>
+            .checkbox-list label {
+                display: block;
             }
-            .item-image {
-                max-width: 100px;
-                max-height: 100px;
-                margin-right: 10px;
-            }
-            .item-text {
-                display: inline-block;
-                vertical-align: top;
-            }
-</style>
-</head>
-<body>
-<div id="main">
-<h3>This is my first widget.</h3>
-<div id="itemList"></div>
-</div>
-<script type="text/javascript">
+        </style>
+    </head>
+    <body>
+        <div id="main">
+            <h3>This is my first widget.</h3>
+            <span id="labelText"></span>
+            <div class="checkbox-list" id="checkboxList">
+                <!-- Checkboxes will be added here -->
+            </div>
+        </div>
+        <script type="text/javascript">
             JFCustomWidget.subscribe("ready", function(){
-                var items = JSON.parse(JFCustomWidget.getWidgetSetting('items') || '[]');
-                var itemList = document.getElementById('itemList');
-                items.forEach(function(item, index) {
-                    // Create item container
-                    var div = document.createElement('div');
-                    div.className = 'item';
-                    div.id = 'item-' + index;
- 
-                    // Add image
-                    var img = document.createElement('img');
-                    img.src = item.picture;
-                    img.className = 'item-image';
-                    div.appendChild(img);
- 
-                    // Add text
-                    var span = document.createElement('span');
-                    span.className = 'item-text';
-                    span.innerHTML = item.text;
-                    div.appendChild(span);
- 
-                    // Add number input
-                    var input = document.createElement('input');
-                    input.type = 'number';
-                    input.id = 'number-' + index;
-                    input.className = 'item-input';
-                    input.setAttribute('min', '0'); // Set minimum value if necessary
-                    div.appendChild(input);
- 
-                    // Append item to the list
-                    itemList.appendChild(div);
+                var label = JFCustomWidget.getWidgetSetting('QuestionLabel');
+                var options = JFCustomWidget.getWidgetSetting('options') || 'Option 1,Option 2,Option 3';
+                var optionsArray = options.split(',');
+
+                // Set the question label
+                document.getElementById('labelText').innerHTML = label;
+                
+                // Add checkboxes
+                var checkboxListDiv = document.getElementById('checkboxList');
+                optionsArray.forEach(function(option, index) {
+                    var container = document.createElement('label');
+                    var checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = 'checkbox_' + index;
+                    checkbox.name = 'checkboxes';
+                    checkbox.value = option;
+                    
+                    var description = document.createTextNode(option);
+                    
+                    container.appendChild(checkbox);
+                    container.appendChild(description);
+                    
+                    checkboxListDiv.appendChild(container);
                 });
- 
+
                 // Subscribe to form submit event
                 JFCustomWidget.subscribe("submit", function(){
-                    var selectedItems = [];
-                    items.forEach(function(item, index) {
-                        var input = document.getElementById('number-' + index);
-                        var quantity = input.value;
-                        if (quantity > 0) {
-                            selectedItems.push({
-                                item: item.text,
-                                quantity: quantity
-                            });
-                        }
+                    var checkboxes = document.querySelectorAll('input[name="checkboxes"]:checked');
+                    var selectedValues = Array.from(checkboxes).map(function(checkbox) {
+                        return checkbox.value;
                     });
+
+                    var isValid = selectedValues.length > 0; // or any other validation you would like to perform
+
                     var msg = {
-                        valid: true,
-                        value: JSON.stringify(selectedItems)
-                    }
+                        valid: isValid,
+                        value: selectedValues.join(', ') // or any other format you need
+                    };
+
+                    // Send value to JotForm
                     JFCustomWidget.sendSubmit(msg);
                 });
             });
-</script>
-</body>
+        </script>
+    </body>
 </html>
