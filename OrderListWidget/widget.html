@@ -11,21 +11,20 @@
     </head>
     <body>
         <div id="main">
-            <h3>This is my first widget.</h3>
-            <span id="labelText"></span>
+            <h3 id="widgetTitle">Loading...</h3>
             <div class="checkbox-list" id="checkboxList">
                 <!-- Checkboxes will be added dynamically here -->
             </div>
         </div>
         <script type="text/javascript">
             JFCustomWidget.subscribe("ready", function(){
-                var label = JFCustomWidget.getWidgetSetting('QuestionLabel');
-                var options = JFCustomWidget.getWidgetSetting('options') || '';
+                var title = JFCustomWidget.getWidgetSetting('QuestionLabel');
+                var options = JFCustomWidget.getWidgetSetting('options') || 'Option 1,Option 2,Option 3';
                 var optionsArray = options.split(',');
 
-                // Set the question label
-                document.getElementById('labelText').innerHTML = label;
-                
+                // Set the title
+                document.getElementById('widgetTitle').innerHTML = title;
+
                 // Add checkboxes to the checkboxList div
                 var checkboxListDiv = document.getElementById('checkboxList');
                 optionsArray.forEach(function(option, index) {
