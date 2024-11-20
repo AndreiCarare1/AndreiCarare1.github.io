@@ -5,6 +5,7 @@
         <style>
             .checkbox-list label {
                 display: block;
+                margin-bottom: 5px;
             }
         </style>
     </head>
@@ -13,48 +14,48 @@
             <h3>This is my first widget.</h3>
             <span id="labelText"></span>
             <div class="checkbox-list" id="checkboxList">
-                <!-- Checkboxes will be added here -->
+                <!-- Checkboxes will be added dynamically here -->
             </div>
         </div>
         <script type="text/javascript">
             JFCustomWidget.subscribe("ready", function(){
                 var label = JFCustomWidget.getWidgetSetting('QuestionLabel');
-                var options = JFCustomWidget.getWidgetSetting('options') || 'Option 1,Option 2,Option 3';
+                var options = JFCustomWidget.getWidgetSetting('options') || '';
                 var optionsArray = options.split(',');
 
                 // Set the question label
                 document.getElementById('labelText').innerHTML = label;
                 
-                // Add checkboxes
+                // Add checkboxes to the checkboxList div
                 var checkboxListDiv = document.getElementById('checkboxList');
                 optionsArray.forEach(function(option, index) {
-                    var container = document.createElement('label');
-                    var checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.id = 'checkbox_' + index;
-                    checkbox.name = 'checkboxes';
-                    checkbox.value = option;
-                    
-                    var description = document.createTextNode(option);
-                    
-                    container.appendChild(checkbox);
-                    container.appendChild(description);
-                    
-                    checkboxListDiv.appendChild(container);
+                    if(option.trim() !== '') {
+                        var container = document.createElement('label');
+                        var checkbox = document.createElement('input');
+                        var description = document.createTextNode(option.trim());
+
+                        checkbox.type = 'checkbox';
+                        checkbox.id = 'checkbox_' + index;
+                        checkbox.value = option.trim();
+                        
+                        container.appendChild(checkbox);
+                        container.appendChild(description);
+                        checkboxListDiv.appendChild(container);
+                    }
                 });
 
                 // Subscribe to form submit event
                 JFCustomWidget.subscribe("submit", function(){
-                    var checkboxes = document.querySelectorAll('input[name="checkboxes"]:checked');
+                    var checkboxes = document.querySelectorAll('#checkboxList input[type="checkbox"]:checked');
                     var selectedValues = Array.from(checkboxes).map(function(checkbox) {
                         return checkbox.value;
                     });
 
-                    var isValid = selectedValues.length > 0; // or any other validation you would like to perform
+                    var isValid = selectedValues.length > 0; // Validation: at least one checkbox should be checked
 
                     var msg = {
                         valid: isValid,
-                        value: selectedValues.join(', ') // or any other format you need
+                        value: selectedValues.join(', ') // Join selected values with a comma
                     };
 
                     // Send value to JotForm
