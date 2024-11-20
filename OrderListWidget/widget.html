@@ -2,62 +2,28 @@
 <html>
     <head>
         <script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
-        <style>
-            .checkbox-list label {
-                display: block;
-                margin-bottom: 5px;
-            }
-        </style>
     </head>
     <body>
         <div id="main">
-            <h3 id="widgetTitle">Loading...</h3>
-            <div class="checkbox-list" id="checkboxList">
-                <!-- Checkboxes will be added dynamically here -->
-            </div>
+            <h3>This is my first widget.</h3>
+            <span id="labelText"></span>
+            <input type="text" id="userInput">
         </div>
         <script type="text/javascript">
+            //always subscribe to ready event and implement widget related code
+            //inside callback function , it is the best practice while developing widgets
             JFCustomWidget.subscribe("ready", function(){
-                var title = JFCustomWidget.getWidgetSetting('QuestionLabel');
-                var options = JFCustomWidget.getWidgetSetting('options') || 'Option 1,Option 2,Option 3';
-                var optionsArray = options.split(',');
-
-                // Set the title
-                document.getElementById('widgetTitle').innerHTML = title;
-
-                // Add checkboxes to the checkboxList div
-                var checkboxListDiv = document.getElementById('checkboxList');
-                optionsArray.forEach(function(option, index) {
-                    if(option.trim() !== '') {
-                        var container = document.createElement('label');
-                        var checkbox = document.createElement('input');
-                        var description = document.createTextNode(option.trim());
-
-                        checkbox.type = 'checkbox';
-                        checkbox.id = 'checkbox_' + index;
-                        checkbox.value = option.trim();
-                        
-                        container.appendChild(checkbox);
-                        container.appendChild(description);
-                        checkboxListDiv.appendChild(container);
-                    }
-                });
-
-                // Subscribe to form submit event
+                var label = JFCustomWidget.getWidgetSetting('QuestionLabel');
+                document.getElementById('labelText').innerHTML = label;
+                //subscribe to form submit event
                 JFCustomWidget.subscribe("submit", function(){
-                    var checkboxes = document.querySelectorAll('#checkboxList input[type="checkbox"]:checked');
-                    var selectedValues = Array.from(checkboxes).map(function(checkbox) {
-                        return checkbox.value;
-                    });
-
-                    var isValid = selectedValues.length > 0; // Validation: at least one checkbox should be checked
-
                     var msg = {
-                        valid: isValid,
-                        value: selectedValues.join(', ') // Join selected values with a comma
-                    };
-
-                    // Send value to JotForm
+                        //you should valid attribute to data for JotForm
+                        //to be able to use youw widget as required
+                        valid: true,
+                        value: document.getElementById('userInput').value
+                    }
+                    // send value to JotForm
                     JFCustomWidget.sendSubmit(msg);
                 });
             });
