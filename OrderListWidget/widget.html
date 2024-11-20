@@ -1,113 +1,83 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="widget.css">
-    <script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
-    
+<script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
+<style>
+            .item {
+                border: 1px solid #ddd;
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+            .item-image {
+                max-width: 100px;
+                max-height: 100px;
+                margin-right: 10px;
+            }
+            .item-text {
+                display: inline-block;
+                vertical-align: top;
+            }
+</style>
 </head>
 <body>
-    
-    <div id="itemContainer"></div>
-    <script type="text/javascript">
-        // Subscribe to "ready" event for initialization
-JFCustomWidget.subscribe("ready", function(data) {
-    const container = document.getElementById('itemContainer');
-    
-    // If in builder mode, allow item creation
-    if (data.mode === 'builder') {
-        const addItemButton = document.createElement('button');
-        addItemButton.textContent = "Add Item";
-        addItemButton.onclick = addNewItem;
-        container.appendChild(addItemButton);
-    } else if (data.items) { // If in filler mode, display items
-        displayItems(data.items);
-    }
-});
-
-// Function to add a new item in builder mode
-function addNewItem() {
-    const container = document.getElementById('itemContainer');
-    const itemDiv = document.createElement('div');
-    itemDiv.classList.add('item');
-
-    // Create input for text
-    const textInput = document.createElement('input');
-    textInput.type = 'text';
-    textInput.placeholder = 'Enter item text';
-    textInput.classList.add('item-text');
-
-    // Create input for image URL
-    const imageInput = document.createElement('input');
-    imageInput.type = 'text';
-    imageInput.placeholder = 'Enter image URL';
-    imageInput.classList.add('item-image');
-
-    itemDiv.appendChild(textInput);
-    itemDiv.appendChild(imageInput);
-    container.appendChild(itemDiv);
-
-    saveItemsToForm();
-}
-
-// Function to display items in filler mode
-function displayItems(items) {
-    const container = document.getElementById('itemContainer');
-    items.forEach((item, index) => {
-        const itemDiv = document.createElement('div');
-        itemDiv.classList.add('item');
-
-        // Display image
-        const img = document.createElement('img');
-        img.src = item.image;
-        img.alt = item.text;
-
-        // Display text
-        const text = document.createElement('p');
-        text.textContent = item.text;
-
-        // Add number input
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.placeholder = 'Enter quantity';
-        input.dataset.itemIndex = index;
-
-        itemDiv.appendChild(img);
-        itemDiv.appendChild(text);
-        itemDiv.appendChild(input);
-
-        container.appendChild(itemDiv);
-    });
-}
-
-// Function to save items to the form
-function saveItemsToForm() {
-    const items = [];
-    document.querySelectorAll('.item').forEach(itemDiv => {
-        const text = itemDiv.querySelector('.item-text').value;
-        const image = itemDiv.querySelector('.item-image').value;
-
-        if (text && image) {
-            items.push({ text, image });
-        }
-    });
-
-    JFCustomWidget.sendData({ items });
-}
-
-// Listen for submission to collect input
-JFCustomWidget.subscribe("submit", function() {
-    const selectedItems = [];
-    document.querySelectorAll('.item input[type="number"]').forEach(input => {
-        const quantity = parseInt(input.value);
-        if (quantity > 0) {
-            const index = input.dataset.itemIndex;
-            selectedItems.push({ index, quantity });
-        }
-    });
-
-    JFCustomWidget.sendSubmit({ selectedItems });
-});
-
-    </script>   
+<div id="main">
+<h3>This is my first widget.</h3>
+<div id="itemList"></div>
+</div>
+<script type="text/javascript">
+            JFCustomWidget.subscribe("ready", function(){
+                var items = JSON.parse(JFCustomWidget.getWidgetSetting('items') || '[]');
+                var itemList = document.getElementById('itemList');
+                items.forEach(function(item, index) {
+                    // Create item container
+                    var div = document.createElement('div');
+                    div.className = 'item';
+                    div.id = 'item-' + index;
+ 
+                    // Add image
+                    var img = document.createElement('img');
+                    img.src = item.picture;
+                    img.className = 'item-image';
+                    div.appendChild(img);
+ 
+                    // Add text
+                    var span = document.createElement('span');
+                    span.className = 'item-text';
+                    span.innerHTML = item.text;
+                    div.appendChild(span);
+ 
+                    // Add number input
+                    var input = document.createElement('input');
+                    input.type = 'number';
+                    input.id = 'number-' + index;
+                    input.className = 'item-input';
+                    input.setAttribute('min', '0'); // Set minimum value if necessary
+                    div.appendChild(input);
+ 
+                    // Append item to the list
+                    itemList.appendChild(div);
+                });
+ 
+                // Subscribe to form submit event
+                JFCustomWidget.subscribe("submit", function(){
+                    var selectedItems = [];
+                    items.forEach(function(item, index) {
+                        var input = document.getElementById('number-' + index);
+                        var quantity = input.value;
+                        if (quantity > 0) {
+                            selectedItems.push({
+                                item: item.text,
+                                quantity: quantity
+                            });
+                        }
+                    });
+                    var msg = {
+                        valid: true,
+                        value: JSON.stringify(selectedItems)
+                    }
+                    JFCustomWidget.sendSubmit(msg);
+                });
+            });
+</script>
 </body>
 </html>
