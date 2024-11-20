@@ -1,32 +1,196 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
-    </head>
-    <body>
-        <div id="main">
-            <h3>This is my first widget.</h3>
-            <span id="labelText"></span>
-            <input type="text" id="userInput">
-        </div>
-        <script type="text/javascript">
-            //always subscribe to ready event and implement widget related code
-            //inside callback function , it is the best practice while developing widgets
-            JFCustomWidget.subscribe("ready", function(){
-                var label = JFCustomWidget.getWidgetSetting('QuestionLabel');
-                document.getElementById('labelText').innerHTML = label;
-                //subscribe to form submit event
-                JFCustomWidget.subscribe("submit", function(){
-                    var msg = {
-                        //you should valid attribute to data for JotForm
-                        //to be able to use youw widget as required
-                        valid: true,
-                        value: document.getElementById('userInput').value
-                    }
-                    // send value to JotForm
-                    JFCustomWidget.sendSubmit(msg);
-                });
+<!-- This HTML page must be deployed on a server, with a publicly reachable URL -->
+<!-- When it's publicly available, create a widget on Jotform https://www.jotform.com/developers/widgets/ -->
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@20.3.0/build/css/intlTelInput.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@20.3.0/build/js/intlTelInput.min.js"></script>
+    <script src="https://js.jotform.com/JotFormCustomWidget.min.js"></script>
+    <style>
+        .form-control::placeholder {
+            opacity: 0.8 !important;
+        }
+        .iti.iti--allow-dropdown.iti--show-flags {
+            width: calc(100% - 8px);
+            margin-left: 4px;
+            margin-top: 4px;
+        }
+        .error {
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="row">
+        <form novalidate>
+            <div>
+                <input id="phone" type="tel" enterkeyhint="next" autocomplete="off" class="form-control" name="phone" oninput="handlePhoneNumberChange()"
+                    onblur="handlePhoneNumberChange()">
+            </div>
+            <div>
+                <small class="error text-danger" id="phone-error"></small>
+            </div>
+        </form>
+    </div>
+    <script>
+        var iti;
+
+        // Translations object
+        const translations = {
+            en: {
+                invalidNumber: "The phone number is invalid",
+                invalidCountryCode: "The country code is invalid",
+                tooShort: "The phone number is too short for this country",
+                tooLong: "The phone number is too long for this country",
+                invalidNumberDefault: "The phone number is invalid"
+            },
+            fr: {
+                invalidNumber: "Le numéro de téléphone est invalide",
+                invalidCountryCode: "Le code pays est invalide",
+                tooShort: "Le numéro de téléphone est trop court pour ce pays",
+                tooLong: "Le numéro de téléphone est trop long pour ce pays",
+                invalidNumberDefault: "Le numéro de téléphone est invalide"
+            },
+            de: {
+                invalidNumber: "Die Telefonnummer ist ungültig",
+                invalidCountryCode: "Die Ländervorwahl ist ungültig",
+                tooShort: "Die Telefonnummer ist für dieses Land zu kurz",
+                tooLong: "Die Telefonnummer ist für dieses Land zu lang",
+                invalidNumberDefault: "Die Telefonnummer ist ungültig"
+            },
+            es: {
+                invalidNumber: "El número de teléfono es inválido",
+                invalidCountryCode: "El código de país es inválido",
+                tooShort: "El número de teléfono es demasiado corto para este país",
+                tooLong: "El número de teléfono es demasiado largo para este país",
+                invalidNumberDefault: "El número de teléfono es inválido"
+            },
+            it: {
+                invalidNumber: "Il numero di telefono non è valido",
+                invalidCountryCode: "Il prefisso internazionale è invalido",
+                tooShort: "Il numero di telefono è troppo corto per questo paese",
+                tooLong: "Il numero di telefono è troppo lungo per questo paese",
+                invalidNumberDefault: "Il numero di telefono non è valido"
+            },
+            pt: {
+                invalidNumber: "O número de telefone é inválido",
+                invalidCountryCode: "O código do país é inválido",
+                tooShort: "O número de telefone é muito curto para este país",
+                tooLong: "O número de telefone é muito longo para este país",
+                invalidNumberDefault: "O número de telefone é inválido"
+            },
+            nl: {
+                invalidNumber: "Het telefoonnummer is ongeldig",
+                invalidCountryCode: "De landcode is ongeldig",
+                tooShort: "Het telefoonnummer is te kort voor dit land",
+                tooLong: "Het telefoonnummer is te lang voor dit land",
+                invalidNumberDefault: "Het telefoonnummer is ongeldig"
+            },
+            tr: {
+                invalidNumber: "Telefon numarası geçersiz",
+                invalidCountryCode: "Ülke kodu geçersiz",
+                tooShort: "Telefon numarası bu ülke için çok kısa",
+                tooLong: "Telefon numarası bu ülke için çok uzun",
+                invalidNumberDefault: "Telefon numarası geçersiz"
+            },
+            ar: {
+                invalidNumber: "رقم الهاتف غير صالح",
+                invalidCountryCode: "رمز الدولة غير صالح",
+                tooShort: "رقم الهاتف قصير جداً بالنسبة لهذه الدولة",
+                tooLong: "رقم الهاتف طويل جداً بالنسبة لهذه الدولة",
+                invalidNumberDefault: "رقم الهاتف غير صالح"
+            }
+        };
+
+        // Detect user's language
+        const userLanguage = navigator.language || navigator.userLanguage;
+        const lang = userLanguage.startsWith('fr') ? 'fr' :
+            userLanguage.startsWith('de') ? 'de' :
+                userLanguage.startsWith('es') ? 'es' :
+                    userLanguage.startsWith('it') ? 'it' :
+                        userLanguage.startsWith('pt') ? 'pt' :
+                            userLanguage.startsWith('nl') ? 'nl' :
+                                userLanguage.startsWith('tr') ? 'tr' :
+                                    userLanguage.startsWith('ar') ? 'ar' : 'en'; // Default to English
+
+        function getErrorMessage(errorCode) {
+            const errorMessages = translations[lang];
+            switch (errorCode) {
+                case 1:
+                    return errorMessages.invalidCountryCode;
+                case 2:
+                    return errorMessages.tooShort;
+                case 3:
+                    return errorMessages.tooLong;
+                default:
+                    return errorMessages.invalidNumberDefault;
+            }
+        }
+
+        const phoneInput = document.querySelector("#phone");
+        document.addEventListener('DOMContentLoaded', function () {
+            //Instantiate Intl-Tel-Input
+            iti = window.intlTelInput(phoneInput, {
+                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@20.3.0/build/js/utils.js",
+                initialCountry: "auto",
+                geoIpLookup: function (callback) {
+                    fetch("https://ipapi.co/json")
+                        .then(function (res) { return res.json(); })
+                        .then(function (data) { callback(data.country_code); })
+                        .catch(function () { callback(); });
+                },
             });
-        </script>
-    </body>
+            
+            // Intercept the "Enter" key press for the phone input field to prevent submitting the form
+            phoneInput.addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    phoneInput.blur(); // Remove the focus on the field
+                    event.preventDefault(); // Prevents the form from being submitted
+                }
+            });
+        });
+        var internationalPhoneNumber;
+        function handlePhoneNumberChange() {
+            const phoneErrorInput = document.querySelector("#phone-error");
+            if (iti.isValidNumberPrecise()) {
+                //Empty the error message and replace the phone input value with the correct E.164 number
+                phoneErrorInput.innerText = '';
+                phoneInput.setCustomValidity('');
+                phoneInput.value = iti.getNumber();
+                phoneInput.classList.add("is-valid");
+                phoneInput.classList.remove("is-invalid");
+                //Update the phone number to be sent to Jotform
+                internationalPhoneNumber = iti.getNumber();
+                //Send the valide data to the form
+                JFCustomWidget.sendData({
+                    valid: iti.isValidNumberPrecise(),
+                    value: internationalPhoneNumber,
+                });
+            } else {
+                const errorCode = iti.getValidationError();
+                const errorMessage = getErrorMessage(errorCode);
+                phoneErrorInput.innerText = errorMessage;
+                phoneInput.setCustomValidity(errorMessage);
+                phoneInput.classList.add("is-invalid");
+                phoneInput.classList.remove("is-valid");
+            }
+        }
+
+    </script>
+    <script type="text/javascript">
+        JFCustomWidget.subscribe("ready", function () {
+            JFCustomWidget.subscribe("submit", function () {
+                //When the form is submitted, send it the phone number and its validity
+                var phoneInput = document.getElementById('phone');
+                var msg = {
+                    valid: iti.isValidNumberPrecise(),
+                    value: internationalPhoneNumber,
+                }
+                JFCustomWidget.sendSubmit(msg);
+            });
+        });
+    </script>
+</body>
 </html>
