@@ -2,34 +2,90 @@
 <html>
     <head>
         <script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
+        <style>
+            body {
+                visibility: hidden;
+            }
+        </style>
     </head>
     <body>
         <div id="main">
-            <h3>Agent information: "phone" or "desktop".</h3>
-            <span id="agent_info"></span>
+            <h3>This is a widget</h3>
         </div>
-        <script type="text/javascript">
-            //always subscribe to ready event and implement widget related code
-            //inside callback function , it is the best practice while developing widgets
-            JFCustomWidget.subscribe("ready", function(){
+    <script type="text/javascript">
+        // Widget code that should fire when the widget is ready
+        JFCustomWidget.subscribe("ready", function(event){
+            widgetSettings = JFCustomWidget.getWidgetSettings(); // Needs to be available globally
+                console.log('Jotform Widget is ready')
+                setTimeout(function(){
+                window.top.postMessage({
+                    'event_name': 'form_page_visible',
+                    'formName': widgetSettings.formName,
+                    'page': widgetSettings.page
+                }, 
+                'https://ent-nts.ca');
+            }, 250); // Need to add a delay because event is sent before GA4 config is loaded
 
-                function getDeviceType() {
-                    var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-
-                    if (/android/i.test(userAgent) ||
-                        /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-                        return "phone";
-                    }
-                    return "desktop";
+            // Listening for messages sent to the widget context but not available in the top window
+            window.addEventListener('message', (event) => {
+                // console.log('Received message within widget:', event);
+                let dataType = {};
+                let dataMethod = {};
+                try {                
+                    dataType = JSON.parse(event.data).type
+                    dataMethod = JSON.parse(event.data).method
+                } catch (error) {
+                    console.error('Failed to parse JSON:', error.message);
+                    return
                 }
 
-                var msg = {
-                    value: getDeviceType()
-                }
-
-                JFCustomWidget.sendData(msg);
-                document.getElementById('agent_info').innerHTML = getDeviceType();
+                // Sending the message to the top window
+                if (event.origin == 'https://form.jotform.com' && dataType == 'submit' && typeof(dataMethod) == 'undefined') {
+                    // console.log('Submit event is: ', event)
+                    window.top.postMessage({
+                        'event_name': 'form_completed',
+                        'formName': widgetSettings.formName
+                    }, 
+                'https://ent-nts.ca');
+                };
             });
-        </script>
+        });
+
+        const allowedOrigins = ['https://form.jotform.com', 'https://widgets.jotform.io', 'https://jotform-widget.pages.dev'];
+let pushedPages = []; // Accumulating pushed pages to make sure we don't send one twice. 
+window.addEventListener('message', (event) => {
+    // Check if the origin is one of the allowed origins
+    if (allowedOrigins.includes(event.origin)) {
+        // Check if the event name is the one we want
+        if (event.data.event_name == 'form_page_visible') {
+            // console.log('form_interaction')
+            // console.log('Event is: ', event)
+            const pushedData = {
+                event: 'form_interaction', //Changing name to comply with GA4 naming convention in tracking plan
+                formName: event.data.formName,
+                page: event.data.page
+            }
+            // Make sure we haven't pushed this page before. Initially looked at the whole pushedData object, 
+            // but GTM does weird shenanigans with with it by modifying the object even though it's a const.
+            if (!pushedPages.includes(event.data.page)) {
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push(pushedData);
+                pushedPages.push(event.data.page);
+            }
+        } else if (event.data.event_name == 'form_completed') {
+            // console.log('form_completed')
+            // console.log('Event is: ', event)
+            const pushedData = {
+                event: event.data.event_name,
+                formName: event.data.formName,
+                page: undefined
+            }
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push(pushedData);
+        }
+    }
+}, false);
+        
+    </script>
     </body>
 </html>
