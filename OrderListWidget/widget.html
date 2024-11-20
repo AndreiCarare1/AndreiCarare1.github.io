@@ -1,203 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
-    <title>Multi-select Hover</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 0;
-        }
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-            width: 100%;
-        }
-        .card-container {
-            background-color: #fff;
-            border: 1px solid #e1e1e1;
-            border-radius: 10px;
-            padding: 0px;
-            flex-basis: 28%;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            text-align: center;
-            position: relative;
-            transition: border 0.3s ease;
-        }
-        .image-wrapper {
-            border-radius: 10px;
-            overflow: hidden;
-            width: 100%;
-            height: 200px; /* Altura fixa para manter a proporção */
-            background-size: cover;
-            background-position: center;
-        }
-        .hover-box {
-            margin-top: 20px;
-            border: 1px solid #e1e1e1;
-            border-radius: 10px;
-            padding: 10px;
-            text-align: left;
-            display: flex;
-            align-items: center;
-        }
-        .hover-box p {
-            margin: 0;
-            padding: 0;
-            color: #333;
-            flex-grow: 1;
-        }
-        .radio-container {
-            display: none;
-        }
-        .assistive-text {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #666;
-            text-align: left;
-            padding: 5px 5px 20px 5px;
-        }
-        .card-container input[type="radio"]:checked + .card-container, card-container input[type="checkbox"]:checked + .card-container {
-            border: 1px solid #4CAF50;
-        }
-        .card-container input[type="radio"]:checked + .content .checkmark, .card-container input[type="checkbox"]:checked + .content .checkmark {
-            background-color: #4CAF50;
-            color: #fff;
-        }
-        .card-container input[type="radio"]:checked, .card-container input[type="checkbox"]:checked {
-            border: 2px solid #4CAF50;
-        }
-        .content {
-            cursor: pointer;
-            padding: 15px;
-            border-radius: 10px;
-            transition: border 0.3s ease;
-        }
-        .checkmark {
-            width: 20px;
-            height: 20px;
-            border: 1px solid #e1e1e1;
-            border-radius: 50%;
-            color: #e1e1e1;
-            text-align: center;
-            line-height: 20px;
-            margin-right: 10px;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-    </style>
-</head>
-<body>
-    <div class="container" id="cardContainer"></div>
-    <input type="hidden" id="selectedValues" name="selectedValues">
-</body>
-<script>
-    function convertOptionsToObject(optionsString) {
-        const optionsArray = optionsString.split(/},\s*{/).map(part => {
-            part = part.replace(/^{/, '').replace(/}$/, '');
-            const parts = part.split(/,\s*(?=[^,]*:)/);
-            const obj = {};
-            parts.forEach(p => {
-                const [key, ...value] = p.split(/\s*:\s*/);
-                obj[key.trim()] = value.join(':').trim();
+<html>
+    <head>
+        <script src="//js.jotform.com/JotFormCustomWidget.min.js"></script>
+    </head>
+    <body>
+        <div id="main">
+            <h3>This is my first widget.</h3>
+            <span id="labelText"></span>
+            <input type="text" id="userInput">
+        </div>
+        <script type="text/javascript">
+            //always subscribe to ready event and implement widget related code
+            //inside callback function , it is the best practice while developing widgets
+            JFCustomWidget.subscribe("ready", function(){
+                var label = JFCustomWidget.getWidgetSetting('QuestionLabel');
+                document.getElementById('labelText').innerHTML = label;
+                //subscribe to form submit event
+                JFCustomWidget.subscribe("submit", function(){
+                    var msg = {
+                        //you should valid attribute to data for JotForm
+                        //to be able to use youw widget as required
+                        valid: true,
+                        value: document.getElementById('userInput').value
+                    }
+                    // send value to JotForm
+                    JFCustomWidget.sendSubmit(msg);
+                });
             });
-            return obj;
-        });
-        return optionsArray;
-    }
-
-    function createCard(option, type) {
-        const label = document.createElement('label');
-        label.className = 'card-container';
-
-        const inputType = type === "Single Choice" ? "radio" : "checkbox";
-
-        const input = document.createElement('input');
-        input.type = inputType;
-        input.name = 'multi-select';
-        input.value = option.option;
-        input.className = 'radio-container';
-        input.addEventListener('change', updateHiddenInput); // Adiciona evento de mudança
-
-        const content = document.createElement('div');
-        content.className = 'content';
-
-        const imageWrapper = document.createElement('div');
-        imageWrapper.className = 'image-wrapper';
-        imageWrapper.style.backgroundImage = `url(${option.image})`;
-
-        const hoverBox = document.createElement('div');
-        hoverBox.className = 'hover-box';
-        const checkmark = document.createElement('div');
-        checkmark.className = 'checkmark';
-        checkmark.textContent = '✔';
-        const p = document.createElement('p');
-        p.textContent = option.option;
-        hoverBox.appendChild(checkmark);
-        hoverBox.appendChild(p);
-
-        const assistiveText = document.createElement('div');
-        assistiveText.className = 'assistive-text';
-        assistiveText.textContent = option.description;
-
-        content.appendChild(imageWrapper);
-        content.appendChild(hoverBox);
-        content.appendChild(assistiveText);
-
-        label.appendChild(input);
-        label.appendChild(content);
-
-        return label;
-    }
-
-    function updateHiddenInput() {
-        // Coleta todos os inputs selecionados e junta seus valores em uma string separada por vírgulas
-        const selectedValues = Array.from(document.querySelectorAll('input[name="multi-select"]:checked'))
-            .map(input => input.value)
-            .join(',');
-        // Atualiza o valor do input hidden
-        document.getElementById('selectedValues').value = selectedValues;
-
-        // Envia os dados atualizados para o JotForm
-        JFCustomWidget.sendData({
-            value: selectedValues
-        });
-    }
-
-    function resizeIframe() {
-        JFCustomWidget.requestFrameResize({ height: document.querySelector('body').clientHeight + 30});
-    }
-
-    window.addEventListener('resize', resizeIframe);
-    
-    JFCustomWidget.subscribe("ready", function(){
-        const optionsString = JFCustomWidget.getWidgetSetting('options');
-        const type = JFCustomWidget.getWidgetSetting('inputType');
-        const options = convertOptionsToObject(optionsString);
-        console.log(options, type);
-
-        const cardContainer = document.getElementById('cardContainer');
-        options.forEach(option => {
-            const card = createCard(option, type);
-            cardContainer.appendChild(card);
-        });
-
-        resizeIframe();
-
-        JFCustomWidget.subscribe("submit", function(){
-            var msg = {
-                valid: true,
-                value: document.getElementById('selectedValues').value // Usa o valor do input hidden
-            }
-            JFCustomWidget.sendSubmit(msg);
-        });
-    });
-</script>
+        </script>
+    </body>
 </html>
